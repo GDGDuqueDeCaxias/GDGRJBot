@@ -1,1 +1,1 @@
-worker: ./scripts/heroku-worker.sh
+worker: gdgajubot

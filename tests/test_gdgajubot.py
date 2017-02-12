@@ -137,23 +137,25 @@ class TestGDGAjuBot(unittest.TestCase):
         g_bot.packtpub_free_learning(message, now=datetime.fromtimestamp(ts - 29, tz=AJU_TZ))
         self._assert_packtpub_free_learning(bot, message, warning="30 segundos")
 
-    def test_changelog(self):
+    def test_about(self):
         bot, resources, message = MockTeleBot(), MockResources(), MockMessage(id=0xB00B)
         g_bot = gdgajubot.GDGAjuBot(self.config, bot, resources)
-        g_bot.changelog(message)
-        self._assert_changelog(bot, message)
+        g_bot.about(message)
+        self._assert_about(bot, message)
 
     def _assert_send_welcome(self, bot, message):
         self._assert_mockbot(bot)
-        bot.reply_to.assert_called_with(message, "Olá! Eu sou o bot do %s! Se precisar de ajuda: /help" % (self.config["group_name"]))
+        response = bot.reply_to.call_args[0][1]
+        assert '/help' in response
+        for group in self.config["group_name"]:
+            assert group in response
 
     def _assert_help_message(self, bot, message):
         self._assert_mockbot(bot)
-        help_message = "/help - Exibe essa mensagem.\n" \
-            "/book - Informa o ebook gratuito do dia na Packt Publishing.\n" \
-            "/events - Informa a lista de próximos eventos do {group_name}."
-        help_message = help_message.format(group_name=self.config["group_name"])
-        bot.reply_to.assert_called_with(message, help_message)
+        commands = ('/help', '/book', '/events', '/about')
+        response = bot.reply_to.call_args[0][1]
+        for command in commands:
+            assert command in response
 
     def _assert_list_upcoming_events(self, bot, message):
         self._assert_mockbot(bot)
@@ -173,10 +175,11 @@ class TestGDGAjuBot(unittest.TestCase):
              "🔎 Good practices with Miguel O’Hara\n") + warning
         bot.reply_to.assert_called_with(message, r, parse_mode="Markdown", disable_web_page_preview=True)
 
-    def _assert_changelog(self, bot, message):
+    def _assert_about(self, bot, message):
         self._assert_mockbot(bot)
-        r = "https://github.com/GDGAracaju/GDGAjuBot/blob/master/CHANGELOG.md"
-        bot.send_message.assert_called_with(message.chat.id, r)
+        link = "https://github.com/GDGAracaju/GDGAjuBot/"
+        response = bot.send_message.call_args[0][1]
+        assert link in response
 
     def _assert_mockbot(self, bot):
         self.assertIsInstance(bot, MockTeleBot)
